@@ -12,8 +12,11 @@
 
 import textwrap
 
-import mock
-import pep8
+# work with both pep8 and pycodestyle
+try:
+    import pycodestyle
+except ImportError:
+    import pep8 as pycodestyle
 import testtools
 
 from keystoneclient.tests.hacking import checks
@@ -25,16 +28,13 @@ class TestCheckOsloNamespaceImports(testtools.TestCase):
         super(TestCheckOsloNamespaceImports, self).setUp()
         self.useFixture(client_fixtures.Deprecations())
 
-    # We are patching pep8 so that only the check under test is actually
-    # installed.
-    @mock.patch('pep8._checks',
-                {'physical_line': {}, 'logical_line': {}, 'tree': {}})
     def run_check(self, code):
-        pep8.register_check(checks.check_oslo_namespace_imports)
+        pycodestyle.register_check(checks.check_oslo_namespace_imports)
 
         lines = textwrap.dedent(code).strip().splitlines(True)
 
-        checker = pep8.Checker(lines=lines)
+        guide = pycodestyle.StyleGuide(select='K333')
+        checker = pycodestyle.Checker(lines=lines, options=guide.options)
         checker.check_all()
         checker.report._deferred_print.sort()
         return checker.report._deferred_print
